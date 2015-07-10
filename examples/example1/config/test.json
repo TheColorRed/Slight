@@ -1,0 +1,17 @@
+{
+    "author": {
+        "name": "Ryan Naddy",
+        "email": "untuned20@gmail.com"
+    },
+    "routes": [
+        {
+            "route": "/examples/example1/home",
+            "template": "templates/home.html",
+            "default": true
+        },
+        {
+            "route": "/examples/example1/games",
+            "template": "templates/games.html"
+        }
+    ]
+}
