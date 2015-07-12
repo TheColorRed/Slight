@@ -7,6 +7,11 @@
         a.href = baseObj.href + "/";
         base = a.pathname.replace("//", "/");
     };
+
+    $global = {
+        data: []
+    };
+
     /**
      * Core functionality
      */
@@ -25,13 +30,13 @@
          * @returns {$slight}
          */
         run: function(){
-            var cfg = document.querySelector("meta[name=config]");
+            var cfg = document.querySelector("meta[data-name=config]");
             var $this = this;
             $ajax.json(cfg.content).success(function(json){
                 $this.config = $this.mergeOptions($this.config, json);
                 $this.getRoute();
                 $this.loadAdditionalData().then(function(){
-                    $this.parsePage();
+                    $templating.parsePage();
                 });
             });
             return this;
@@ -143,7 +148,7 @@
             return new Promise(function(resolve, reject){
                 $async(requests).complete(function(data){
                     data.forEach(function(item){
-                        $this.data.push({
+                        $global.data.push({
                             name: item.meta.varName,
                             data: item.data
                         });
@@ -151,9 +156,15 @@
                     resolve();
                 });
             });
-        },
-        parsePage: function(){
-            var repeaters = document.querySelectorAll("[data-repeat]:not([data-repeated])");
+        }
+    };
+
+    $templating = {
+        parsePage: function(rootNode){
+            if(typeof rootNode === 'undefined'){
+                rootNode = document;
+            }
+            var repeaters = rootNode.querySelectorAll("[data-repeat]:not([data-repeated])");
 
             if(repeaters.length === 0){
                 return;
@@ -167,13 +178,13 @@
                 var parent = item.parentNode;
 
                 // Find the data associated to the repeater where the names are the same
-                var result = $this.data.filter(function(itm){
+                var result = $global.data.filter(function(itm){
                     return itm.name === repeat[1];
                 });
 
                 // Get the data and apply a filter if one is present
                 var data = result[0].data;
-                var items = $filter(filter).apply(data);
+                var items = $filter(filter, repeat[1], repeat[0]).apply(data);
 
                 // Get the html as a stirng so we can replace the placeholders
                 var cloneRoot = document.createElement("div");
@@ -183,11 +194,12 @@
                 parent.removeChild(item);
                 // Replace the items in the string with the ones from the array
                 items.forEach(function(dtaitem){
+                    $this.parsePage(cloneRoot);
                     var cloneStr = cloneRoot.innerHTML;
                     var regex = new RegExp('\\{\\$' + repeat[0] + '\\.(.+?)\\}', 'g');
                     cloneStr.match(regex).forEach(function(item){
                         var itemStr = item.replace(new RegExp('\\{\\$' + repeat[0] + '\\.'), "").replace(/\}$/, "");
-                        var value = deep_value(dtaitem, itemStr);
+                        var value = dtaitem.find(itemStr);
                         cloneStr = cloneStr.replace("{$" + repeat[0] + "." + itemStr + "}", value);
                     });
                     var node = document.createElement("div");
@@ -195,35 +207,44 @@
                     parent.appendChild(node.childNodes[0]);
                 });
             });
-            this.parsePage();
         }
-    };
-
-    deep_value = function(obj, path){
-        for(var i = 0, path = path.split(/[\[\]\.]/), len = path.length; i < len; i++){
-            if(path[i]){
-                obj = obj[path[i]];
-                if(typeof obj === 'undefined'){
-                    return '';
-                }
-            }
-        }
-        return obj;
     };
 })(window, document, location);
 
-$filter = function(filter){
-    var fCore = {
+$filter = function(filter, objectName, shortHand){
+    var filterCore = {
         filter: filter,
+        objectName: objectName,
+        shortHand: shortHand,
         apply: function(data){
-//            console.log(this.filter);
-            return data;
+            var $this = this;
+            generateMarkup = function(){
+                var expString = $this.filter;
+                if(typeof $this.shortHand !== 'undefined'){
+                    var reg = new RegExp('(^|\\s)' + $this.shortHand + '\\.', 'g');
+                    expString = expString.replace(reg, '$1data.' + $this.objectName + '.');
+                }
+                console.log(expString)
+                var result = data.filter(function(item){
+
+                });
+                return result;
+            };
+
+            if(!this.filter){
+                return data;
+            }else{
+                generateMarkup();
+                return data;
+            }
+//            return data;
 //    var result = [].filter(function(item){
 //        return item.thing === '123';
 //    });
         }
     };
-    return fCore;
+
+    return filterCore;
 };
 
 $path = function(path){
@@ -360,6 +381,38 @@ $async = function(requests){
     return obj;
 };
 
+/*
+ * Object prototypes
+ */
+
+/**
+ * Finds an item in an object using a string:
+ *      foo.bar[4].color
+ *      foo.bar.item
+ * @param {String} path
+ * @returns {Object|String}
+ */
+Object.prototype.find = function(path){
+    var obj = this;
+    for(var i = 0, path = path.split(/[\[\]\.]/), len = path.length; i < len; i++){
+        if(path[i]){
+            obj = obj[path[i]];
+            if(typeof obj === 'undefined'){
+                return '';
+            }
+        }
+    }
+    return obj;
+};
+
+/**
+ * Queries an object for matching items
+ * @param {type} query
+ * @returns {undefined}
+ */
+Object.prototype.query = function(query){
+
+};
 
 //Object.defineProperty(Array.prototype, "push", {
 //    configurable: true,

@@ -5,7 +5,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-        <meta name="config" content="config/test.json">
+        <meta data-name="config" content="config/test.json">
         <meta data-load-json="people" content="data/people.json">
         <meta data-load-json="people2" content="data/people.json">
         <meta data-load-json="vehicles" content="data/vehicles.json">
@@ -24,7 +24,7 @@
             </div>
 
             <!-- Loop through people from data-load-json -->
-            <div class="col-lg-12" data-repeat="i in people" data-filter="first == 'ryan' and age >= 18">
+            <div class="col-lg-12" data-repeat="i in people" data-filter="i.first == 'ryan' && i.age >= 18">
                 <div class="row">
                     <div class="col-md-6">
                         <p><b>{$i.name.first} {$i.name.last}:</b> {$i.age}</p>
@@ -42,7 +42,7 @@
 
 
             <!-- Loop through vehicles from data-load-json -->
-            <div class="col-lg-12" data-repeat="i in vehicles" data-filter="first == 'ryan' and age >= 18">
+            <div class="col-lg-12" data-repeat="i in vehicles" data-filter="first == 'ryan' && age >= 18">
                 <div class="row">
                     <div class="col-md-12">
                         <b>{$i.make}:</b> {$i.model}

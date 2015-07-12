@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Query Test</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script>
+            Object.prototype.find = function(path){
+                var obj = this;
+                for(var i = 0, path = path.split(/[\[\]\.]/), len = path.length; i < len; i++){
+                    if(path[i]){
+                        obj = obj[path[i]];
+                        if(typeof obj === 'undefined'){
+                            return '';
+                        }
+                    }
+                }
+                return obj;
+            };
+            Object.prototype.query = function(string){
+                var $this = this;
+                var subSearches = [], i = 0, final = [];
+                // Find the sub queries: "(query 1) or (query 2) or (query 3)"
+                string.split(/(\(.+?\))/g).forEach(function(value){
+                    if(value){
+                        subSearches[i] = value.trim().replace(/^\(/, "").replace(/\)$/, "");
+                        i++;
+                    }
+                });
+                // Build an array of objects with the sub searches from above
+                subSearches.forEach(function(value){
+                    if(['and', '&&', 'or', '||'].indexOf(value) !== -1){
+                        return true;
+                    }
+                    var conditions = value.split(/\s+(and|or|&&|\|\|)\s+(?![\w\s]*')/);
+                    var groups = {
+                        first: "",
+                        and: [],
+                        or: []
+                    };
+                    var prev = '';
+                    conditions.forEach(function(value){
+                        value = value.replace(/\s\s+/g, ' ');
+                        if(['and', '&&', 'or', '||'].indexOf(value) !== -1){
+                            switch(value.toLowerCase()){
+                                case 'and':
+                                case '&&':
+                                    prev = 'and';
+                                    break;
+                                case 'or':
+                                case '||':
+                                    prev = 'or';
+                                    break;
+                            }
+                        }else if(!prev && !groups.first){
+                            var matches = value.match(/(.+?)\s(.+?)\s(.+)/);
+                            matches.shift();
+                            groups.first = {
+                                key: matches[0],
+                                operation: matches[1],
+                                value: matches[2]
+                            };
+                        }else{
+                            var matches = value.match(/(.+?)\s(.+?)\s(.+)/);
+                            matches.shift();
+                            groups[prev].push({
+                                key: matches[0],
+                                operation: matches[1],
+                                value: matches[2]
+                            });
+                        }
+                    });
+                    console.log(groups);
+//                    var prev = 'and';
+//                    conditions.forEach(function(value, key, array){
+//                        if(prev === 'and'){
+////                            obj.find(v);
+//                        }else if(prev === 'or'){
+//
+//                        }
+//                        $this.forEach(function(obj){
+//                            console.log(obj.find('name'))
+//                        });
+//                    });
+                });
+            };
+            var obj = [
+                {name: 'Jim', age: 12},
+                {name: 'Bob', age: 16},
+                {name: 'Tim', age: 5},
+                {name: 'Sim', age: 10}
+            ];
+
+            var obj2 = {
+            people: {
+            [
+            {
+            name: 'billy'
+            },
+            {
+            name: 'george'
+            }
+            ]
+            }
+            };
+
+            obj.query("(name == 'Bob' and name == 'Tim') or (age == 5)");
+            console.log(screen)
+
+        </script>
+    </head>
+    <body>
+
+    </body>
+</html>
